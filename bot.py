@@ -127,32 +127,72 @@ async def add_tag_command(client, message):
         logger.error(f"Add tag error: {e}")
         await message.reply("❌ API bağlantı hatası. Lütfen daha sonra tekrar deneyin.")
 
+
+
+async def fetch_tags_from_api(number: str) -> list:
+    """Improved tag fetching function with better error handling"""
+    try:
+        response = requests.get(f"{TAG_FETCH_API}?gsm={number}", timeout=10)
+        
+        if response.status_code == 200:
+            # Try different parsing methods based on response format
+            try:
+                data = response.json()
+                if isinstance(data, list):
+                    return data
+                elif isinstance(data, dict):
+                    return [data] if data.get("phone") else []
+            except ValueError:
+                # If not JSON, try to parse as text
+                content = response.text.strip()
+                if content:
+                    return [{"label": content, "phone": number}]
+                
+        return []
+    except Exception as e:
+        logger.error(f"API fetch error for {number}: {str(e)}")
+        return []
+
 @app.on_message(filters.command("hashtag"))
-async def fetch_tags_command(client, message):
+async def fetch_tags_command(client, message: Message):
     if len(message.command) < 2:
         await message.reply("❌ Kullanım: /hashtag <numara>\nÖrnek: /hashtag 905449090000")
         return
     
     number = message.command[1]
     
+    # Show loading status
+    progress_msg = await message.reply("🔍 Etiketler aranıyor... Lütfen bekleyiniz.")
+    
     try:
-        # API'den etiketleri çek
-        response = requests.get(f"?gsm={number}")
+        tags = await fetch_tags_from_api(number)
+        hastag_status[message.from_user.id] = number
         
-        if response.status_code == 200:
-            tags = response.json()  # API'nin JSON formatında döndüğünü varsayalım
-            hastag_status[message.from_user.id] = number
-            
-            if tags:
-                tag_list = "\n".join([f"🔹 {tag}" for tag in tags])
-                await message.reply(f"📋 **{number} numarasına ait etiketler:**\n\n{tag_list}")
+        if tags:
+            # Format the response based on the data structure
+            if isinstance(tags[0], dict):
+                tag_list = "\n".join(
+                    f"📌 {tag.get('label', 'Etiket yok')} "
+                    f"(Ekleyen: {tag.get('created_by', 'Bilinmiyor')}, "
+                    f"Tarih: {tag.get('created_at', 'Bilinmiyor')})"
+                    for tag in tags if tag.get('phone') == number
+                )
             else:
-                await message.reply(f"ℹ️ {number} numarasına ait herhangi bir etiket bulunamadı.")
+                tag_list = "\n".join(f"🔹 {tag}" for tag in tags)
+            
+            await progress_msg.edit_text(
+                f"📋 **{number} numarasına ait etiketler:**\n\n{tag_list}\n\n"
+                f"Toplam {len(tags)} etiket bulundu."
+            )
         else:
-            await message.reply("❌ Etiketler çekilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
+            await progress_msg.edit_text(f"ℹ️ {number} numarasına ait herhangi bir etiket bulunamadı.")
+            
     except Exception as e:
         logger.error(f"Fetch tags error: {e}")
-        await message.reply("❌ API bağlantı hatası. Lütfen daha sonra tekrar deneyin.")
+        await progress_msg.edit_text(
+            "❌ Etiketler çekilirken bir hata oluştu.\n"
+            "Lütfen daha sonra tekrar deneyin veya yöneticiye bildirin."
+        )
 
 @app.on_message(filters.command("list"))
 async def list_tags_command(client, message):
