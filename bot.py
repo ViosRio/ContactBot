@@ -137,7 +137,7 @@ async def fetch_tags_command(client, message):
     
     try:
         # API'den etiketleri çek
-        response = requests.get(f"{TAG_FETCH_API}?gsm={number}")
+        response = requests.get(f"?gsm={number}")
         
         if response.status_code == 200:
             tags = response.json()  # API'nin JSON formatında döndüğünü varsayalım
