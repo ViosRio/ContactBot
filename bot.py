@@ -65,7 +65,7 @@ def get_start_message(user):
 MAIN_BUTTONS = InlineKeyboardMarkup([
     [
         InlineKeyboardButton("📜 Yardım", callback_data="help"),
-        InlineKeyboardButton("⚙️ Ayarlar", callback_data="settings")
+        InlineKeyboardButton("⚙️ Api", url=f"https://cerenviosvipx.serv00.net/")
     ],
     [
         InlineKeyboardButton("👤 Kurucu", url=f"https://t.me/{OWNER_USERNAME}")
@@ -160,30 +160,45 @@ async def fetch_tags_command(client, message):
         return
     
     number = message.command[1]
-    loading_msg = await message.reply("🔍 Veriler çekiliyor, lütfen bekleyin...")
+    loading_msg = await message.reply("⏳ Etiketler aranıyor, lütfen bekleyin...")
 
     try:
         response = requests.get(f"https://cerenviosvipx.serv00.net/pages/data.php?gsm={number}")
         
         if response.status_code == 200:
-            # API'nin özel formatını parse ediyoruz
+            # API verilerini işle
             result = []
             lines = response.text.split('\n')
             for line in lines:
                 if '"label":' in line:
                     label = line.split('"label":')[1].split('"')[1]
-                    result.append(f"🏷️ {label}")
+                    result.append(f"• {label}")
             
             if result:
-                await loading_msg.edit(f"✅ **{number} için etiketler:**\n\n" + "\n".join(result))
+                # Tüm sonuçları dosyaya yaz
+                with open("tag.txt", "w", encoding="utf-8") as f:
+                    f.write(f"📱 {number} NUMARASINA AİT ETİKETLER ({len(result)} adet)\n\n")
+                    f.write("\n".join(result))
+                
+                # Dosyayı gönder
+                await loading_msg.delete()
+                await message.reply_document(
+                    document="tag.txt",
+                    caption=f"📊 Toplam {len(result)} etiket bulundu",
+                    reply_markup=InlineKeyboardMarkup([
+                        [InlineKeyboardButton("📌 Yeni Arama", callback_data="fetch_tags")]
+                    ])
+                )
             else:
                 await loading_msg.edit(f"❌ {number} numarasına ait etiket bulunamadı")
         else:
-            await loading_msg.edit("🔴 API'ye bağlanılamadı. Sunucu kapalı olabilir")
+            await loading_msg.edit("🔴 API hatası! Lütfen daha sonra tekrar dene")
 
     except Exception as e:
-        await loading_msg.edit(f"⛔ Hata oluştu: {str(e)}")
-        logger.error(f"API hatası: {e}")
+        await loading_msg.edit(f"⛔ Hata: {str(e)}")
+        logger.error(f"API Error: {e}")
+                
+        
         
 
 @app.on_message(filters.command("list"))
