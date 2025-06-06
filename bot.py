@@ -1,6 +1,3 @@
-#
-#
-#
 #-----------CREDITS -----------
 # telegram : @legend_coder
 # github : noob-mukesh
@@ -60,7 +57,6 @@ def get_start_message(user):
 
 # Butonlar
 MAIN_BUTTONS = InlineKeyboardMarkup([
-    [InlineKeyboardButton("🌟 EŞLEŞ", callback_data="find_partner")],
     [
         InlineKeyboardButton("📜 Yardım", callback_data="help"),
         InlineKeyboardButton("⚙️ Ayarlar", callback_data="settings")
@@ -68,12 +64,11 @@ MAIN_BUTTONS = InlineKeyboardMarkup([
     [
         InlineKeyboardButton("👤 Kurucu", url=f"https://t.me/{OWNER_USERNAME}")
     ],
-    [InlineKeyboardButton("❌ Sohbeti Bitir", callback_data="end_chat")]
 ])
 
 FRIENDS_BUTTONS = InlineKeyboardMarkup([
-    [InlineKeyboardButton("➕ Arkadaş Ekle", callback_data="add_friend")],
-    [InlineKeyboardButton("📋 Arkadaş Listesi", callback_data="list_friends")],
+    [InlineKeyboardButton("➕ Etiket Ekle", callback_data="add_friend")],
+    [InlineKeyboardButton("📋 Etiket Listesi", callback_data="list_friends")],
     [InlineKeyboardButton("🔙 Geri", callback_data="back_to_main")]
 ])
 
@@ -98,11 +93,6 @@ async def start(client, message):
         caption=get_start_message(user),
         reply_markup=MAIN_BUTTONS
     )
-
-@app.on_message(filters.command("settings"))
-async def settings(client, message):
-    await message.reply("⚙️ **Ayarlar**", reply_markup=SETTINGS_BUTTONS)
-
 
 @app.on_message(filters.command("add"))
 async def add_friend(client, message):
