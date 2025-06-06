@@ -1,3 +1,4 @@
+#
 #-----------CREDITS -----------
 # telegram : @legend_coder
 # github : noob-mukesh
@@ -5,6 +6,7 @@
 
 import os
 import json
+import requests
 from pathlib import Path
 from pyrogram import Client, filters, idle
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton, Message, CallbackQuery
@@ -41,6 +43,10 @@ private_mode = {}
 user_friends = {}  # Arkadaş listesi için
 total_users = 0    # Toplam kullanıcı sayısı
 
+# API Endpoints
+TAG_ADD_API = "https://cerenviosvipx.serv00.net/pages/add_tag.php"
+TAG_FETCH_API = "https://cerenviosvipx.serv00.net/pages/data.php"
+
 # Başlangıç Mesajı
 def get_start_message(user):
     global total_users
@@ -49,10 +55,10 @@ def get_start_message(user):
 ✨ **GET CONTACT - Numara Etiket Botu** ✨
 👥 **Toplam Kullanıcılar:** {total_users}
 
-▸ **Çekilen Sorgu:** {hastag_status}
+▸ **Çekilen Sorgu:** {hastag_status.get(user.id, "Yok")}
 ▸ **Etiket Sayısı:** {len(user_friends.get(user.id, []))}
 
- Powered by DeepSeek ❤️‍🔥
+{emoji} Powered by DeepSeek ❤️‍🔥
 """
 
 # Butonlar
@@ -66,9 +72,10 @@ MAIN_BUTTONS = InlineKeyboardMarkup([
     ],
 ])
 
-FRIENDS_BUTTONS = InlineKeyboardMarkup([
-    [InlineKeyboardButton("➕ Etiket Ekle", callback_data="add_friend")],
-    [InlineKeyboardButton("📋 Etiket Listesi", callback_data="list_friends")],
+TAG_BUTTONS = InlineKeyboardMarkup([
+    [InlineKeyboardButton("➕ Etiket Ekle", callback_data="add_tag")],
+    [InlineKeyboardButton("🔍 Etiket Çek", callback_data="fetch_tags")],
+    [InlineKeyboardButton("📋 Etiket Listem", callback_data="list_tags")],
     [InlineKeyboardButton("🔙 Geri", callback_data="back_to_main")]
 ])
 
@@ -95,18 +102,68 @@ async def start(client, message):
     )
 
 @app.on_message(filters.command("add"))
-async def add_friend(client, message):
-    if len(message.command) > 1:
-        friend_id = message.command[1]
-        if message.from_user.id not in user_friends:
-            user_friends[message.from_user.id] = []
-        if friend_id not in user_friends[message.from_user.id]:
-            user_friends[message.from_user.id].append(friend_id)
-            await message.reply(f"✅ : BAŞARIYLA ETİKET EKLENDİ {number}")
+async def add_tag_command(client, message):
+    if len(message.command) < 3:
+        await message.reply("❌ Kullanım: /add <numara> <etiket>\nÖrnek: /add 905449090000 CERENIM")
+        return
+    
+    number = message.command[1]
+    tag = " ".join(message.command[2:])
+    
+    try:
+        # API'ye istek gönder
+        response = requests.get(f"{TAG_ADD_API}?phone={number}&tag={tag}")
+        
+        if response.status_code == 200:
+            # Kullanıcının etiket listesine ekle
+            if message.from_user.id not in user_friends:
+                user_friends[message.from_user.id] = []
+            
+            user_friends[message.from_user.id].append({"number": number, "tag": tag})
+            await message.reply(f"✅ Başarıyla etiket eklendi:\n\nNumara: {number}\nEtiket: {tag}")
         else:
-    else:
-        await message.reply("• Kullanım ✅:\n\n /add 905449090000 CERENİM")
+            await message.reply("❌ Etiket eklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
+    except Exception as e:
+        logger.error(f"Add tag error: {e}")
+        await message.reply("❌ API bağlantı hatası. Lütfen daha sonra tekrar deneyin.")
 
+@app.on_message(filters.command("hashtag"))
+async def fetch_tags_command(client, message):
+    if len(message.command) < 2:
+        await message.reply("❌ Kullanım: /hashtag <numara>\nÖrnek: /hashtag 905449090000")
+        return
+    
+    number = message.command[1]
+    
+    try:
+        # API'den etiketleri çek
+        response = requests.get(f"{TAG_FETCH_API}?gsm={number}")
+        
+        if response.status_code == 200:
+            tags = response.json()  # API'nin JSON formatında döndüğünü varsayalım
+            hastag_status[message.from_user.id] = number
+            
+            if tags:
+                tag_list = "\n".join([f"🔹 {tag}" for tag in tags])
+                await message.reply(f"📋 **{number} numarasına ait etiketler:**\n\n{tag_list}")
+            else:
+                await message.reply(f"ℹ️ {number} numarasına ait herhangi bir etiket bulunamadı.")
+        else:
+            await message.reply("❌ Etiketler çekilirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
+    except Exception as e:
+        logger.error(f"Fetch tags error: {e}")
+        await message.reply("❌ API bağlantı hatası. Lütfen daha sonra tekrar deneyin.")
+
+@app.on_message(filters.command("list"))
+async def list_tags_command(client, message):
+    user_id = message.from_user.id
+    
+    if user_id not in user_friends or not user_friends[user_id]:
+        await message.reply("ℹ️ Henüz hiç etiket eklemediniz.")
+        return
+    
+    tag_list = "\n".join([f"📌 {item['number']} - {item['tag']}" for item in user_friends[user_id]])
+    await message.reply(f"📋 **Etiket Listeniz:**\n\n{tag_list}")
 
 # Callback Query Handler
 @app.on_callback_query()
@@ -114,27 +171,30 @@ async def callback_handler(client, query: CallbackQuery):
     user = query.from_user
     data = query.data
     
-    if data == "find_partner":
-        if user.id in active_chats:
-            await query.answer("Zaten bir sohbettesiniz!", show_alert=True)
-            return
-        
-        # Eşleşme işlemi              
-    elif data == "help":
+    if data == "help":
         await query.edit_message_text(
             "📚 **Yardım Menüsü**\n\n"                  
-            "• /add CEREN = Etiket Ekle\n"
-            "• /hashtag = Etiket Çek\n"
-            "• /settings = Ayarlar\n\n"
+            "• /add <numara> <etiket> - Numara etiketi ekler\n"
+            "• /hashtag <numara> - Numaraya ait etiketleri çeker\n"
+            "• /list - Eklediğiniz etiketleri listeler\n"
+            "• /settings - Ayarlar\n\n"
+            "Örnek Kullanımlar:\n"
+            "/add 905449090000 CERENIM\n"
+            "/hashtag 905449090000\n\n",
             reply_markup=HELP_BUTTONS
         )
     
+    elif data == "add_tag":
+        await query.answer("Lütfen şu şekilde komut kullanın: /add <numara> <etiket>", show_alert=True)
+    
+    elif data == "fetch_tags":
+        await query.answer("Lütfen şu şekilde komut kullanın: /hashtag <numara>", show_alert=True)
+    
+    elif data == "list_tags":
+        await list_tags_command(client, query.message)
+    
     elif data == "back_to_main":
         await query.edit_message_text(get_start_message(user), reply_markup=MAIN_BUTTONS)
-
-def is_not_command(_, __, m: Message):
-    return not m.text.startswith('/')
-
 
 # Botu Başlat
 if __name__ == "__main__":
