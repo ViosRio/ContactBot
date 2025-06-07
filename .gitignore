@@ -1,0 +1,6 @@
+# Veri dosyaları
+/data/
+/tag.txt
+/numara_etiketleri
+*.tmp
+*.data
