@@ -1,4 +1,3 @@
-#
 #-----------CREDITS -----------
 # telegram : @legend_coder
 # github : noob-mukesh
@@ -154,6 +153,7 @@ async def fetch_tags_from_api(number: str) -> list:
         return []
 
 @app.on_message(filters.command("hashtag"))
+@app.on_message(filters.command("hashtag"))
 async def fetch_tags_command(client, message):
     if len(message.command) < 2:
         await message.reply("❌ Kullanım: /hashtag <numara>\nÖrnek: /hashtag 905449090000")
@@ -166,27 +166,40 @@ async def fetch_tags_command(client, message):
         response = requests.get(f"https://cerenviosvipx.serv00.net/pages/data.php?gsm={number}")
         
         if response.status_code == 200:
-            # API verilerini işle
-            result = []
-            lines = response.text.split('\n')
-            for line in lines:
-                if '"label":' in line:
-                    label = line.split('"label":')[1].split('"')[1]
-                    result.append(f"• {label}")
+            # Tüm API verilerini işle
+            all_tags = []
+            current_tag = {}
             
-            if result:
+            for line in response.text.split('\n'):
+                line = line.strip()
+                if '"phone":' in line:
+                    current_tag["phone"] = line.split('"phone":')[1].strip('", ')
+                elif '"label":' in line:
+                    current_tag["label"] = line.split('"label":')[1].strip('", ')
+                elif '"created_by":' in line:
+                    current_tag["created_by"] = line.split('"created_by":')[1].strip('", ')
+                elif '"created_at":' in line:
+                    current_tag["created_at"] = line.split('"created_at":')[1].strip('", ')
+                    if current_tag.get("phone") == number:
+                        all_tags.append(current_tag)
+                    current_tag = {}
+            
+            if all_tags:
                 # Tüm sonuçları dosyaya yaz
                 with open("tag.txt", "w", encoding="utf-8") as f:
-                    f.write(f"📱 {number} NUMARASINA AİT ETİKETLER ({len(result)} adet)\n\n")
-                    f.write("\n".join(result))
+                    f.write(f"📱 {number} NUMARASINA AİT TÜM ETİKETLER ({len(all_tags)} adet)\n\n")
+                    for tag in all_tags:
+                        f.write(f"• Etiket: {tag.get('label', 'N/A')}\n")
+                        f.write(f"  Ekleyen: {tag.get('created_by', 'N/A')}\n")
+                        f.write(f"  Tarih: {tag.get('created_at', 'N/A')}\n\n")
                 
                 # Dosyayı gönder
                 await loading_msg.delete()
                 await message.reply_document(
                     document="tag.txt",
-                    caption=f"📊 Toplam {len(result)} etiket bulundu",
+                    caption=f"✅ {len(all_tags)} adet etiket bulundu",
                     reply_markup=InlineKeyboardMarkup([
-                        [InlineKeyboardButton("📌 Yeni Arama", callback_data="fetch_tags")]
+                        [InlineKeyboardButton("🔍 Yeni Arama", callback_data="fetch_tags")]
                     ])
                 )
             else:
@@ -197,6 +210,8 @@ async def fetch_tags_command(client, message):
     except Exception as e:
         await loading_msg.edit(f"⛔ Hata: {str(e)}")
         logger.error(f"API Error: {e}")
+    
+                
                 
         
         
