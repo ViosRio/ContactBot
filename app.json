@@ -1,0 +1,39 @@
+{
+  "name": "ContactBot",
+  "description": "Numara Etiket Botu by ViosTeam",
+  "repository": "https://github.com/ViosRio/ContactBot",
+  "logo": "https://raw.githubusercontent.com/ViosRio/ContactBot/main/assets/logo.png",
+  "keywords": ["python", "pyrogram", "telegram", "bot"],
+  "env": {
+    "API_ID": {
+      "description": "Telegram API_ID (my.telegram.org'dan al)",
+      "value": "20658336",
+      "required": true
+    },
+    "API_HASH": {
+      "description": "Telegram API_HASH",
+      "value": "cedfb5fb4ffee7ecc746b28afc7925e3",
+      "required": true
+    },
+    "BOT_TOKEN": {
+      "description": "Telegram Bot Token (@BotFather'dan al)",
+      "required": true
+    },
+    "SUDO": {
+      "description": "Bot sahibi ID",
+      "value": "5910057231",
+      "required": true
+    }
+  },
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ],
+  "formation": {
+    "worker": {
+      "quantity": 1,
+      "size": "free"
+    }
+  }
+}
