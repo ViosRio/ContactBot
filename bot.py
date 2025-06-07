@@ -153,14 +153,13 @@ async def fetch_tags_from_api(number: str) -> list:
         return []
 
 @app.on_message(filters.command("hashtag"))
-@app.on_message(filters.command("hashtag"))
 async def fetch_tags_command(client, message):
     if len(message.command) < 2:
-        await message.reply("❌ Kullanım: /hashtag <numara>\nÖrnek: /hashtag 905449090000")
+        await message.reply("❌ KULLANIM:\n\n /hashtag 905449090000")
         return
     
     number = message.command[1]
-    loading_msg = await message.reply("⏳ Etiketler aranıyor, lütfen bekleyin...")
+    loading_msg = await message.reply("⏳ Lütfen Bekleyin...")
 
     try:
         response = requests.get(f"https://cerenviosvipx.serv00.net/pages/data.php?gsm={number}")
@@ -197,7 +196,7 @@ async def fetch_tags_command(client, message):
                 await loading_msg.delete()
                 await message.reply_document(
                     document="tag.txt",
-                    caption=f"✅ {len(all_tags)} adet etiket bulundu",
+                    caption=f"✅ BAŞARILI",
                     reply_markup=InlineKeyboardMarkup([
                         [InlineKeyboardButton("🔍 Yeni Arama", callback_data="fetch_tags")]
                     ])
