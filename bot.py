@@ -54,7 +54,6 @@ def get_start_message(user):
 ✨ **GET CONTACT - Numara Etiket Botu** ✨
 👥 **Toplam Kullanıcılar:** {total_users}
 
-▸ **Çekilen Sorgu:** {hastag_status.get(user.id, "Yok")}
 ▸ **Etiket Sayısı:** {len(user_friends.get(user.id, []))}
 
 {emoji} Powered by DeepSeek ❤️‍🔥
@@ -119,7 +118,7 @@ async def add_tag_command(client, message):
                 user_friends[message.from_user.id] = []
             
             user_friends[message.from_user.id].append({"number": number, "tag": tag})
-            await message.reply(f"✅ Başarıyla etiket eklendi:\n\nNumara: {number}\nEtiket: {tag}")
+            await message.reply(f"✅ BAŞARILI:\n\nNumara: {number}\nEtiket: {tag}")
         else:
             await message.reply("❌ Etiket eklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
     except Exception as e:
@@ -164,51 +163,73 @@ async def fetch_tags_command(client, message):
     try:
         response = requests.get(f"https://cerenviosvipx.serv00.net/pages/data.php?gsm={number}")
         
+        # API yanıtını loglayalım
+        logger.info(f"API Response for {number}: {response.text}")
+        
         if response.status_code == 200:
-            # Tüm API verilerini işle
-            all_tags = []
-            current_tag = {}
+            # Ham veriyi analiz edelim
+            if not response.text.strip():
+                await loading_msg.edit("❌ API boş yanıt verdi")
+                return
+                
+            # Veriyi işleme
+            tags = []
+            try:
+                # JSON formatında mı kontrol edelim
+                data = response.json()
+                if isinstance(data, list):
+                    tags = data
+                elif isinstance(data, dict):
+                    tags = [data]
+            except ValueError:
+                # JSON değilse, metin olarak işle
+                for line in response.text.split('\n'):
+                    line = line.strip()
+                    if line.startswith('"phone":'):
+                        phone = line.split('"phone":')[1].strip(' ,')
+                        tags.append({"phone": phone})
+                    elif line.startswith('"label":'):
+                        if tags:
+                            tags[-1]["label"] = line.split('"label":')[1].strip(' ,')
+                    elif line.startswith('"created_by":'):
+                        if tags:
+                            tags[-1]["created_by"] = line.split('"created_by":')[1].strip(' ,')
+                    elif line.startswith('"created_at":'):
+                        if tags:
+                            tags[-1]["created_at"] = line.split('"created_at":')[1].strip(' ,')
             
-            for line in response.text.split('\n'):
-                line = line.strip()
-                if '"phone":' in line:
-                    current_tag["phone"] = line.split('"phone":')[1].strip('", ')
-                elif '"label":' in line:
-                    current_tag["label"] = line.split('"label":')[1].strip('", ')
-                elif '"created_by":' in line:
-                    current_tag["created_by"] = line.split('"created_by":')[1].strip('", ')
-                elif '"created_at":' in line:
-                    current_tag["created_at"] = line.split('"created_at":')[1].strip('", ')
-                    if current_tag.get("phone") == number:
-                        all_tags.append(current_tag)
-                    current_tag = {}
+            # Filtreleme
+            filtered_tags = [tag for tag in tags if str(tag.get("phone")) == str(number)]
             
-            if all_tags:
-                # Tüm sonuçları dosyaya yaz
+            if filtered_tags:
+                # Dosyaya yaz
                 with open("tag.txt", "w", encoding="utf-8") as f:
-                    f.write(f"📱 {number} NUMARASINA AİT TÜM ETİKETLER ({len(all_tags)} adet)\n\n")
-                    for tag in all_tags:
+                    f.write(f"📱 {number} NUMARASINA AİT ETİKETLER\n\n")
+                    for tag in filtered_tags:
                         f.write(f"• Etiket: {tag.get('label', 'N/A')}\n")
                         f.write(f"  Ekleyen: {tag.get('created_by', 'N/A')}\n")
                         f.write(f"  Tarih: {tag.get('created_at', 'N/A')}\n\n")
                 
-                # Dosyayı gönder
+                # Kullanıcıya gönder
                 await loading_msg.delete()
                 await message.reply_document(
                     document="tag.txt",
-                    caption=f"✅ BAŞARILI",
+                    caption=f"✅ {len(filtered_tags)} adet etiket bulundu",
                     reply_markup=InlineKeyboardMarkup([
                         [InlineKeyboardButton("🔍 Yeni Arama", callback_data="fetch_tags")]
                     ])
                 )
             else:
-                await loading_msg.edit(f"❌ {number} numarasına ait etiket bulunamadı")
+                await loading_msg.edit(f"❌ {number} numarasına ait etiket bulunamadı\n\nAPI Yanıtı:\n{response.text[:300]}...")
         else:
-            await loading_msg.edit("🔴 API hatası! Lütfen daha sonra tekrar dene")
+            await loading_msg.edit(f"🔴 API hatası! HTTP {response.status_code}\n\n{response.text[:300]}...")
 
     except Exception as e:
-        await loading_msg.edit(f"⛔ Hata: {str(e)}")
-        logger.error(f"API Error: {e}")
+        error_msg = f"⛔ Hata: {str(e)}"
+        logger.error(f"API Error for {number}: {str(e)}\nResponse: {response.text if 'response' in locals() else 'No response'}")
+        await loading_msg.edit(error_msg)
+                    
+            
     
                 
                 
@@ -220,7 +241,7 @@ async def list_tags_command(client, message):
     user_id = message.from_user.id
     
     if user_id not in user_friends or not user_friends[user_id]:
-        await message.reply("ℹ️ Henüz hiç etiket eklemediniz.")
+        await message.reply("ℹ️ BİLGİ\n\nHenüz Hiç Etiket Eklemediniz.")
         return
     
     tag_list = "\n".join([f"📌 {item['number']} - {item['tag']}" for item in user_friends[user_id]])
@@ -235,11 +256,10 @@ async def callback_handler(client, query: CallbackQuery):
     if data == "help":
         await query.edit_message_text(
             "📚 **Yardım Menüsü**\n\n"                  
-            "• /add <numara> <etiket> - Numara etiketi ekler\n"
-            "• /hashtag <numara> - Numaraya ait etiketleri çeker\n"
-            "• /list - Eklediğiniz etiketleri listeler\n"
-            "• /settings - Ayarlar\n\n"
-            "Örnek Kullanımlar:\n"
+            "• /add = Numara Etiketi Ekler\n"
+            "• /hashtag = Numaraya Ait Ettiketleri Ceker\n"
+            "• /list = Eklediğiniz Etiketleri Listeler\n"
+            "ÖRNEK:\n\n"
             "/add 905449090000 CERENIM\n"
             "/hashtag 905449090000\n\n",
             reply_markup=HELP_BUTTONS
