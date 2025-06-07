@@ -51,10 +51,12 @@ def get_start_message(user):
     global total_users
     emoji = choice(["🔥", "❤️", "🌹", "🎯"])
     return f"""
-✨ **GET CONTACT - Numara Etiket Botu** ✨
-👥 **Toplam Kullanıcılar:** {total_users}
+✨ **GET CONTACT TARZI ÇALIŞAN BİR BOTUM** ✨
 
-▸ **Etiket Sayısı:** {len(user_friends.get(user.id, []))}
+ℹ️ **BİLGİLER**
+
+▸ **Kullanıcılar:** {total_users}
+▸ **Etiket:** {len(user_friends.get(user.id, []))}
 
 {emoji} Powered by DeepSeek ❤️‍🔥
 """
@@ -102,7 +104,7 @@ async def start(client, message):
 @app.on_message(filters.command("add"))
 async def add_tag_command(client, message):
     if len(message.command) < 3:
-        await message.reply("❌ Kullanım: /add <numara> <etiket>\nÖrnek: /add 905449090000 CERENIM")
+        await message.reply("❌ Kullanım:\n\n /add 905449090000 CERENIM")
         return
     
     number = message.command[1]
@@ -120,10 +122,10 @@ async def add_tag_command(client, message):
             user_friends[message.from_user.id].append({"number": number, "tag": tag})
             await message.reply(f"✅ BAŞARILI:\n\nNumara: {number}\nEtiket: {tag}")
         else:
-            await message.reply("❌ Etiket eklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.")
+            await message.reply("❌ Etiket Eklenirken Bir Hata Oluştu.")
     except Exception as e:
         logger.error(f"Add tag error: {e}")
-        await message.reply("❌ API bağlantı hatası. Lütfen daha sonra tekrar deneyin.")
+        await message.reply("❌ API Bağlantı Hatası.")
 
 
 
@@ -206,9 +208,9 @@ async def fetch_tags_command(client, message):
                 with open("tag.txt", "w", encoding="utf-8") as f:
                     f.write(f"📱 {number} NUMARASINA AİT ETİKETLER\n\n")
                     for tag in filtered_tags:
-                        f.write(f"• Etiket: {tag.get('label', 'N/A')}\n")
-                        f.write(f"  Ekleyen: {tag.get('created_by', 'N/A')}\n")
-                        f.write(f"  Tarih: {tag.get('created_at', 'N/A')}\n\n")
+                        f.write(f"• ETİKET: {tag.get('label', 'N/A')}\n")
+                        f.write(f"  EKLEYEN: {tag.get('created_by', 'N/A')}\n")
+                        f.write(f"  TARİH: {tag.get('created_at', 'N/A')}\n\n")
                 
                 # Kullanıcıya gönder
                 await loading_msg.delete()
@@ -220,7 +222,7 @@ async def fetch_tags_command(client, message):
                     ])
                 )
             else:
-                await loading_msg.edit(f"❌ {number} numarasına ait etiket bulunamadı\n\nAPI Yanıtı:\n{response.text[:300]}...")
+                await loading_msg.edit(f"❌ {number} Etiket Bulunamadı\n\nAPI Yanıtı:\n{response.text[:300]}...")
         else:
             await loading_msg.edit(f"🔴 API hatası! HTTP {response.status_code}\n\n{response.text[:300]}...")
 
@@ -231,11 +233,7 @@ async def fetch_tags_command(client, message):
                     
             
     
-                
-                
-        
-        
-
+                                              
 @app.on_message(filters.command("list"))
 async def list_tags_command(client, message):
     user_id = message.from_user.id
@@ -245,7 +243,7 @@ async def list_tags_command(client, message):
         return
     
     tag_list = "\n".join([f"📌 {item['number']} - {item['tag']}" for item in user_friends[user_id]])
-    await message.reply(f"📋 **Etiket Listeniz:**\n\n{tag_list}")
+    await message.reply(f"📋 BİLGİ\n\nEtiket Listeniz:\n\n{tag_list}")
 
 # Callback Query Handler
 @app.on_callback_query()
@@ -256,9 +254,9 @@ async def callback_handler(client, query: CallbackQuery):
     if data == "help":
         await query.edit_message_text(
             "📚 **Yardım Menüsü**\n\n"                  
-            "• /add = Numara Etiketi Ekler\n"
-            "• /hashtag = Numaraya Ait Ettiketleri Ceker\n"
-            "• /list = Eklediğiniz Etiketleri Listeler\n"
+            "• /add = Etiketi Ekler\n"
+            "• /hashtag = Ettiketleri Listeler\n"
+            "• /list = Listeler\n\n"
             "ÖRNEK:\n\n"
             "/add 905449090000 CERENIM\n"
             "/hashtag 905449090000\n\n",
@@ -266,10 +264,10 @@ async def callback_handler(client, query: CallbackQuery):
         )
     
     elif data == "add_tag":
-        await query.answer("Lütfen şu şekilde komut kullanın: /add <numara> <etiket>", show_alert=True)
+        await query.answer("İSTERSEN YARDIM KLAVUZU OKU", show_alert=True)
     
     elif data == "fetch_tags":
-        await query.answer("Lütfen şu şekilde komut kullanın: /hashtag <numara>", show_alert=True)
+        await query.answer("kullanım: /hashtag", show_alert=True)
     
     elif data == "list_tags":
         await list_tags_command(client, query.message)
