@@ -1,6 +1,12 @@
 # Veri dosyaları
-/data/
+/data/*
+!/data/.gitkeep  
+
 /tag.txt
 /numara_etiketleri
 *.tmp
 *.data
+*.log
+
+.vscode/
+.idea/
