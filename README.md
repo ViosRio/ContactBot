@@ -10,7 +10,10 @@
 - **VPS/Docker Desteği** - 7/24 çalışır  
 - **Heroku 1-Tık Deploy** - Aşağıdaki butonla kur  
 
+## 🚀 HIZLI KURULUM  
 [![Deploy to Heroku](https://www.herokucdn.com/deploy/button.svg)](https://heroku.com/deploy?template=https://github.com/ViosRio/ContactBot)  
+[![Run on Replit](https://img.shields.io/badge/Run_on-Replit-667881?logo=replit)](https://replit.com/github/ViosRio/ContactBot)
+
 
 ## 🛠️ MANUEL KURULUM  
 ```bash
@@ -27,3 +30,9 @@ $ python bot.py
 ✅ **Mobil Uyumlu** - Telefondan rahat okunur  
 ✅ **Shield.io Badge** - Profesyonel görünüm  
 
+## 📊 PROJE İSTATİSTİKLERİ  
+![GitHub Stars](https://img.shields.io/github/stars/ViosRio/ContactBot?style=for-the-badge)  
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
+## 📊 VERİTABANI KURULUM PANELİ  
+[![Database Dashboard](https://img.shields.io/badge/📊_Veritabanı_Dashboard-Explore-9cf?style=for-the-badge&logo=sqlite&logoColor=white)](https://github.com/ViosRio/ContactBot/releases/tag/DASHBOARD)  
