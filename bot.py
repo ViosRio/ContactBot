@@ -43,8 +43,8 @@ user_friends = {}  # Arkadaş listesi için
 total_users = 0    # Toplam kullanıcı sayısı
 
 # API Endpoints
-TAG_ADD_API = "https://cerenviosvipx.serv00.net/pages/add_tag.php"
-TAG_FETCH_API = "https://cerenviosvipx.serv00.net/pages/data.php"
+TAG_ADD_API = "https://cerenviosvipx.serv00.net/api/add_tag.php"
+TAG_FETCH_API = "https://cerenviosvipx.serv00.net/api/data.php"
 
 # Başlangıç Mesajı
 def get_start_message(user):
@@ -163,7 +163,7 @@ async def fetch_tags_command(client, message):
     loading_msg = await message.reply("⏳ Lütfen Bekleyin...")
 
     try:
-        response = requests.get(f"https://cerenviosvipx.serv00.net/pages/data.php?gsm={number}")
+        response = requests.get(f"https://cerenviosvipx.serv00.net/api/data.php?gsm={number}")
         
         # API yanıtını loglayalım
         logger.info(f"API Response for {number}: {response.text}")
