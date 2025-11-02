@@ -1,4 +1,4 @@
-# 🔍 GET CONTACT - Numara Etiket Botu  
+# 🔍 GET CONTACT - BOT  
 *Powered by DeepSeek AI ❤️‍🔥 | [@ViosCeo](https://t.me/ViosCeo)*  
 
 ![Banner](https://raw.githubusercontent.com/ViosRio/ContactBot/main/assets/logo.png)  
@@ -34,5 +34,9 @@ $ python bot.py
 ![GitHub Stars](https://img.shields.io/github/stars/ViosRio/ContactBot?style=for-the-badge)  
 ![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
 
-## 📊 VERİTABANI KURULUM PANELİ  
+## 📊 PANEL SCRİPİT  
 [![Database Dashboard](https://img.shields.io/badge/📊_Veritabanı_Dashboard-Explore-9cf?style=for-the-badge&logo=sqlite&logoColor=white)](https://github.com/ViosRio/ContactBot/releases/tag/DASHBOARD)  
+
+##### 📗 TELEGRAM BOT  
+[![Database Dashboard](https://img.shields.io/badge/⚡_TG_BOT-Explore-9cf?style=for-the-badge&logo=sqlite&logoColor=white)](https://t.me/LovoQuenBot)  
+
